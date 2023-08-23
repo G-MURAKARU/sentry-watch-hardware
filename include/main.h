@@ -1,5 +1,14 @@
 #include <stdint.h>
 
+/* LED simulating alarm siren */
+#define ALARM_LED 32
+
+/* buzzer simulating alarm siren */
+#define ALARM_BUZZER 33
+
+/* checkpoint ID to send with a sentry scan */
+#define CHECKPOINT_ID "A";
+
 /* shift ongoing/over */
 extern volatile bool shift_status;
 

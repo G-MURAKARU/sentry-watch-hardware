@@ -31,9 +31,7 @@
 */
 #include <AsyncMqttClient.h>
 
-/*
-  Functions to interact with the LCD Screen
-*/
+/* Functions to interact with the LCD Screen */
 #include "lcd.h"
 
 /*
@@ -45,14 +43,8 @@ extern "C" {
   #include "freertos/timers.h"
 }
 
-/* apparently there is a Ticker library */
-#include <Ticker.h>
-
-/* LED simulating alarm siren */
-#define ALARM_LED 32
-
-/* buzzer simulating alarm siren */
-#define ALARM_BUZZER 33
+/* Functions to interact with the alarm LED and buzzer */
+#include "alarm.h"
 
 #define WIFI_CONFIG_PIN 0
 
@@ -75,9 +67,6 @@ AsyncWiFiManagerParameter mqtt_user("broker-user", "MQTT Username", NULL, 20);
 /* broker password form field */
 AsyncWiFiManagerParameter mqtt_pass("broker-pass", "MQTT Password", NULL, 20);
 
-
-/* Ticker object for flashing the onboard LED */
-Ticker ticker;
 
 /* setting default values for MQTT broker info */
 
@@ -136,9 +125,6 @@ const char *mqtt_client_id = "checkpoint-A";
 /* topic to publish a scan outside the shift */
 #define OUTSIDE_SHIFT_SCAN "sentry-platform/checkpoints/outside-shift-scan"
 
-/* checkpoint ID to send with a sentry scan */
-const char *checkpoint_id = "A";
-
 /* MQTT client reconnection timer */
 TimerHandle_t mqtt_reconnection_timer;
 
@@ -193,7 +179,6 @@ StaticJsonDocument<128> connected_to_mqtt;
 
 /* WiFi and MQTT functions */
 
-void toggle_alarm();
 void set_broker_credentials(AsyncWiFiManagerParameter, AsyncWiFiManagerParameter, AsyncWiFiManagerParameter, AsyncWiFiManagerParameter);
 void connect_to_wifi();
 void config_mode_callback(AsyncWiFiManager *);
@@ -215,25 +200,7 @@ void launch_wifi_config();
 void dump_byte_array(byte *, byte);
 
 volatile uint8_t alarm_reason;
-volatile bool toggle = false;
 volatile bool success = false;
-
-/**
- * tick - toggles the output state of the alarm LED and alarm buzzer
- *        reads LEDs current state then changes it to the opposite
- *
- * Return: Nothing
-*/
-void toggle_alarm()
-{
-  if (toggle)
-    tone(ALARM_BUZZER, 500);
-  else
-    noTone(ALARM_BUZZER);
-
-  digitalWrite(ALARM_LED, digitalRead(ALARM_LED) == HIGH ? LOW : HIGH);
-  toggle = !toggle;
-}
 
 /**
  * config_mode_callback - callback handler function,
@@ -397,7 +364,7 @@ void wifi_event(WiFiEvent_t event)
   {
     case ARDUINO_EVENT_WIFI_STA_CONNECTED:
       Serial.println("Connected to WiFi!");
-      ticker.detach();
+      silence_alarm();
 
       /* reset the reconnection flag if set */
       if (reconnecting)
@@ -654,7 +621,7 @@ void on_mqtt_message(char *topic, char *payload, AsyncMqttClientMessagePropertie
 
       shift_status = false; /* set shift to 'over' */
       alarm_on_off = false; /* reset the alarm flag */
-      ticker.detach(); /* deactivate the alarm */
+      silence_alarm(); /* deactivate the alarm */
     }
   }
 
@@ -664,16 +631,14 @@ void on_mqtt_message(char *topic, char *payload, AsyncMqttClientMessagePropertie
     {
       Serial.println("alarm triggered");
       alarm_on_off = true;
-      ticker.attach(0.5, toggle_alarm);
+      raise_alarm();
     }
     else
     {
       alarm_on_off = false;
       alarm_reason = 0;
       Serial.println("alarm silenced");
-      ticker.detach();
-      digitalWrite(ALARM_LED, LOW);
-      noTone(ALARM_BUZZER);
+      silence_alarm();
     }
   }
 
@@ -763,11 +728,8 @@ void setup() {
   if (my_RTC.lostPower())
     my_RTC.adjust(DateTime(F(__DATE__), F(__TIME__)));
 
-  /* setting up pin connected to alarm LED as an output to flash */
-  pinMode(ALARM_LED, OUTPUT);
-
-  /* setting up pin connected to buzzer */
-  pinMode(ALARM_BUZZER, OUTPUT);
+  /* setting up alarmLED and buzzer pins */
+  initialize_alarm();
 
   /* setting up input pin to listen for on-demand trigger (button) */
   pinMode(WIFI_CONFIG_PIN, INPUT_PULLUP);
@@ -845,7 +807,7 @@ void loop()
 
   /* saving the checkpoint's ID, scanned RFID UID and time of scan (epoch) into a JSON object */
 
-  sentry_scan_info["checkpoint-id"] = checkpoint_id; /* checkpoint */
+  sentry_scan_info["checkpoint-id"] = CHECKPOINT_ID; /* checkpoint */
   sentry_scan_info["sentry-id"] = card_id; /* RFID UID */
   sentry_scan_info["scan-time"] = now.unixtime() + 46; /* epoch time of scan */
 
