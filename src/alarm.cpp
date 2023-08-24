@@ -3,13 +3,18 @@
 #include "alarm.h"
 
 /*
-    Library for performing fixed interval operations in a
-    non-blocking manner
+	Library for performing fixed interval operations in a
+	non-blocking manner
 */
 #include <Ticker.h>
 
+
 /* Ticker object for flashing the onboard LED */
 static Ticker ticker;
+
+/* Global indicator for whether alarm is triggered/silenced */
+volatile bool alarm_on_off = false;
+
 
 /**
  * toggle_alarm - toggles the output state of the alarm LED and alarm buzzer
@@ -19,25 +24,26 @@ static Ticker ticker;
 */
 static void toggle_alarm()
 {
-  static volatile bool toggle = false;
+	static volatile bool toggle = false;
 
-  if (toggle)
-    tone(ALARM_BUZZER, 500);
-  else
-    noTone(ALARM_BUZZER);
+	if (toggle)
+		tone(ALARM_BUZZER, 500);
+	else
+		noTone(ALARM_BUZZER);
 
-  digitalWrite(ALARM_LED, toggle);
-  toggle = !toggle;
+	digitalWrite(ALARM_LED, toggle);
+	toggle = !toggle;
 }
 
 /**
- * raise_alarm - starts the alarm flashing and sound
+ * trigger_alarm - starts the alarm flashing and sound
  *
  * Return: Nothing
 */
-void raise_alarm()
+void trigger_alarm()
 {
-  ticker.attach(ALARM_TOGGLE_PERIOD, toggle_alarm);
+	alarm_on_off = true;
+	ticker.attach(ALARM_TOGGLE_PERIOD, toggle_alarm);
 }
 
 /**
@@ -47,9 +53,10 @@ void raise_alarm()
 */
 void silence_alarm()
 {
-  ticker.detach();
-  digitalWrite(ALARM_LED, LOW);
-  noTone(ALARM_BUZZER);
+	alarm_on_off = false;
+	ticker.detach();
+	digitalWrite(ALARM_LED, LOW);
+	noTone(ALARM_BUZZER);
 }
 
 /**
@@ -60,10 +67,10 @@ void silence_alarm()
 */
 void initialize_alarm()
 {
-  /* setting up pin connected to alarm LED as an output to flash */
-  pinMode(ALARM_LED, OUTPUT);
+	/* setting up pin connected to alarm LED as an output to flash */
+	pinMode(ALARM_LED, OUTPUT);
 
-  /* setting up pin connected to buzzer */
-  pinMode(ALARM_BUZZER, OUTPUT);
+	/* setting up pin connected to buzzer */
+	pinMode(ALARM_BUZZER, OUTPUT);
 }
 

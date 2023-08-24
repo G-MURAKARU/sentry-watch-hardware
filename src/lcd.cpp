@@ -8,7 +8,6 @@
 */
 #include <LiquidCrystal_I2C.h>
 
-/* LCD instantiations */
 
 /* active I2C LCD instance */
 static LiquidCrystal_I2C lcd(0x27, 16, 2);
@@ -36,6 +35,7 @@ static const byte x_mark[8] = {
 	0b10001,
 	0b00000
 };
+
 
 /**
  * display_connected - displays WiFi and MQTT check marks when both are connected

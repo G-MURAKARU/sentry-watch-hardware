@@ -5,29 +5,29 @@
 #include <WiFi.h>
 
 /*
-  WiFi Manager to help with setting WiFi credentials at runtime
-  and asynchronous connection handling
+	WiFi Manager to help with setting WiFi credentials at runtime
+	and asynchronous connection handling
 */
 #include <ESPAsyncWiFiManager.h>
 
 /*
-  library to interact with RFID card reader, includes SPI.h
+	library to interact with RFID card reader, includes SPI.h
 */
 #include <MFRC522.h>
 
 /*
-  library to interact with the DS3231 real-time clock, includes Wire.h
+	library to interact with the DS3231 real-time clock, includes Wire.h
 */
 #include <RTClib.h>
 
 /*
-  library to work with JSON data, used to send info to the backend server
+	library to work with JSON data, used to send info to the backend server
 */
 #include <ArduinoJson.h>
 
 /*
-  MQTT library helps with setting up the MQTT client
-  and asynchronous connection handling
+	MQTT library helps with setting up the MQTT client
+	and asynchronous connection handling
 */
 #include <AsyncMqttClient.h>
 
@@ -35,12 +35,12 @@
 #include "lcd.h"
 
 /*
-  FreeRTOS software timers used because
-  there is no built-in Ticker library
+	FreeRTOS software timers used because
+	there is no built-in Ticker library
 */
 extern "C" {
-  #include "freertos/FreeRTOS.h"
-  #include "freertos/timers.h"
+	#include "freertos/FreeRTOS.h"
+	#include "freertos/timers.h"
 }
 
 /* Functions to interact with the alarm LED and buzzer */
@@ -133,8 +133,8 @@ volatile unsigned long previous_millis = 0;
 const unsigned short buffer_millis = 10000;
 
 /* 
-  connected to WiFi
-  avoid conflict with WiFi GotIP callback
+	connected to WiFi
+	avoid conflict with WiFi GotIP callback
 */
 volatile bool connected = false;
 
@@ -145,9 +145,6 @@ volatile bool config = false;
 
 /* shift ongoing/over */
 volatile bool shift_status = false;
-
-/* alarm triggered/silenced */
-volatile bool alarm_on_off = false;
 
 /* definitions for the RFID card reader */
 
@@ -200,7 +197,9 @@ void launch_wifi_config();
 void dump_byte_array(byte *, byte);
 
 volatile uint8_t alarm_reason;
-volatile bool success = false;
+
+/* Flag to display success message on the LCD screen */
+volatile bool display_success = false;
 
 /**
  * config_mode_callback - callback handler function,
@@ -212,10 +211,10 @@ volatile bool success = false;
 */
 void config_mode_callback(AsyncWiFiManager *my_wifi_manager)
 {
-  display_AP_mode();
-  Serial.println("Entered config mode:");
-  Serial.println(WiFi.softAPIP());
-  Serial.println(my_wifi_manager->getConfigPortalSSID());
+	display_AP_mode();
+	Serial.println("Entered config mode:");
+	Serial.println(WiFi.softAPIP());
+	Serial.println(my_wifi_manager->getConfigPortalSSID());
 }
 
 /**
@@ -225,32 +224,32 @@ void config_mode_callback(AsyncWiFiManager *my_wifi_manager)
 */
 void setup_wifi_manager()
 {
-  /* setting up callback function that runs before the ESP goes into WiFi config mode */
-  wifi_manager.setAPCallback(config_mode_callback);
+	/* setting up callback function that runs before the ESP goes into WiFi config mode */
+	wifi_manager.setAPCallback(config_mode_callback);
 
-  /* setting up a timeout duration for the ESP to remain in AP (config) mode before restart */
-  wifi_manager.setConfigPortalTimeout(120);
+	/* setting up a timeout duration for the ESP to remain in AP (config) mode before restart */
+	wifi_manager.setConfigPortalTimeout(120);
 
-  /* setting up a timeout duration for the ESP to connect to previous WiFi before going into AP mode */
-  wifi_manager.setConnectTimeout(20);
+	/* setting up a timeout duration for the ESP to connect to previous WiFi before going into AP mode */
+	wifi_manager.setConnectTimeout(20);
 
-  /*
-    adding WiFi custom parameters to the portal
-  */
+	/*
+		adding WiFi custom parameters to the portal
+	*/
 
-  /* domain/IP guiding text */
-  wifi_manager.addParameter(&domain_or_ip);
-  /* add MQTT broker domain text field */
-  wifi_manager.addParameter(&mqtt_host_domain);
-  /* add MQTT broker IP text field */
-  wifi_manager.addParameter(&mqtt_host_ip);
-  /* add MQTT broker username text field */
-  wifi_manager.addParameter(&mqtt_user);
-  /* add MQTT broker password text field */
-  wifi_manager.addParameter(&mqtt_pass);
+	/* domain/IP guiding text */
+	wifi_manager.addParameter(&domain_or_ip);
+	/* add MQTT broker domain text field */
+	wifi_manager.addParameter(&mqtt_host_domain);
+	/* add MQTT broker IP text field */
+	wifi_manager.addParameter(&mqtt_host_ip);
+	/* add MQTT broker username text field */
+	wifi_manager.addParameter(&mqtt_user);
+	/* add MQTT broker password text field */
+	wifi_manager.addParameter(&mqtt_pass);
 
-  /* some MQTT setup code, should run just once */
-  mqtt_setup_once();
+	/* some MQTT setup code, should run just once */
+	mqtt_setup_once();
 }
 
 /**
@@ -263,28 +262,28 @@ void setup_wifi_manager()
 */
 void connect_to_wifi()
 {
-  wifi_manager.resetSettings();
+	wifi_manager.resetSettings();
 
-  domain = false;
-  connected = false;
+	domain = false;
+	connected = false;
 
-  Serial.println("Connecting to WiFi...");
+	Serial.println("Connecting to WiFi...");
 
-  /* 'Checkpoint A' is the displayed name of the ESP access point */
-  if (!wifi_manager.startConfigPortal("Checkpoint A"))
-  {
-    /*
-      this code block is run when the config portal timeout is exhausted
-    */
+	/* 'Checkpoint A' is the displayed name of the ESP access point */
+	if (!wifi_manager.startConfigPortal("Checkpoint A"))
+	{
+		/*
+			this code block is run when the config portal timeout is exhausted
+		*/
 
-    Serial.println("Failed to connect and hit timeout");
-    delay(3000);
-    ESP.restart();
-    delay(5000);
-  }
+		Serial.println("Failed to connect and hit timeout");
+		delay(3000);
+		ESP.restart();
+		delay(5000);
+	}
 
-  /* save broker credentials */
-  set_broker_credentials(mqtt_host_domain, mqtt_host_ip, mqtt_user, mqtt_pass);
+	/* save broker credentials */
+	set_broker_credentials(mqtt_host_domain, mqtt_host_ip, mqtt_user, mqtt_pass);
 }
 
 /**
@@ -298,55 +297,55 @@ void connect_to_wifi()
 */
 void set_broker_credentials(AsyncWiFiManagerParameter host_domain, AsyncWiFiManagerParameter host_ip, AsyncWiFiManagerParameter username, AsyncWiFiManagerParameter password)
 {
-  /* save broker's username */
-  strncpy(broker_username, username.getValue(), username.getValueLength());
-  /* save broker's password */
-  strncpy(broker_password, password.getValue(), password.getValueLength());
+	/* save broker's username */
+	strncpy(broker_username, username.getValue(), username.getValueLength());
+	/* save broker's password */
+	strncpy(broker_password, password.getValue(), password.getValueLength());
 
-  /*
-    test for broker identity - domain name or IP address
-  */
+	/*
+		test for broker identity - domain name or IP address
+	*/
 
-  /* returns true if a valid broker IP address is given, saves broker's IP */
-  bool input_ip = broker_ip.fromString(host_ip.getValue());
+	/* returns true if a valid broker IP address is given, saves broker's IP */
+	bool input_ip = broker_ip.fromString(host_ip.getValue());
 
-  /* if either an invalid broker IP or no broker IP was given */
-  if (!input_ip || (broker_ip.toString() == "0.0.0.0"))
-  {
-    /*
-      checks if a domain name was given, no validity checks as long as it's a string
-    */
+	/* if either an invalid broker IP or no broker IP was given */
+	if (!input_ip || (broker_ip.toString() == "0.0.0.0"))
+	{
+		/*
+			checks if a domain name was given, no validity checks as long as it's a string
+		*/
 
-    /* if no domain name was keyed in */
-    if (String(host_domain.getValue()) == "")
-    {
-      Serial.println("Please enter a valid domain/IP, push reset button.");
-      display_mqtt_retry();
-      ESP.restart();
-    }
+		/* if no domain name was keyed in */
+		if (String(host_domain.getValue()) == "")
+		{
+			Serial.println("Please enter a valid domain/IP, push reset button.");
+			display_mqtt_retry();
+			ESP.restart();
+		}
 
-    /* if a domain name (any string) was keyed in */
-    else
-    {
-      /* save broker's domain name */
-      strncpy(broker_host, host_domain.getValue(), host_domain.getValueLength());
+		/* if a domain name (any string) was keyed in */
+		else
+		{
+			/* save broker's domain name */
+			strncpy(broker_host, host_domain.getValue(), host_domain.getValueLength());
 
-      /* indicate that a domain name was given and not an IP Address */
-      domain = true;
-    }
-  }
+			/* indicate that a domain name was given and not an IP Address */
+			domain = true;
+		}
+	}
 
-  Serial.println(broker_host);
-  Serial.println(broker_username);
-  Serial.println(broker_password);
-  Serial.println(broker_ip);
+	Serial.println(broker_host);
+	Serial.println(broker_username);
+	Serial.println(broker_password);
+	Serial.println(broker_ip);
 
-  /* some MQTT setup code, should be run with every WiFi connection */
-  mqtt_setup_repeated();
+	/* some MQTT setup code, should be run with every WiFi connection */
+	mqtt_setup_repeated();
 
-  /* connect to MQTT */
-  connected = true;
-  connect_to_mqtt();
+	/* connect to MQTT */
+	connected = true;
+	connect_to_mqtt();
 }
 
 /**
@@ -359,63 +358,63 @@ void set_broker_credentials(AsyncWiFiManagerParameter host_domain, AsyncWiFiMana
 */
 void wifi_event(WiFiEvent_t event)
 {
-  Serial.printf("[WiFi Event] event: %d\n", event);
-  switch(event)
-  {
-    case ARDUINO_EVENT_WIFI_STA_CONNECTED:
-      Serial.println("Connected to WiFi!");
-      silence_alarm();
+	Serial.printf("[WiFi Event] event: %d\n", event);
+	switch(event)
+	{
+		case ARDUINO_EVENT_WIFI_STA_CONNECTED:
+			Serial.println("Connected to WiFi!");
+			silence_alarm();
 
-      /* reset the reconnection flag if set */
-      if (reconnecting)
-        reconnecting = false;
+			/* reset the reconnection flag if set */
+			if (reconnecting)
+				reconnecting = false;
 
-      break;
+			break;
 
-    case ARDUINO_EVENT_WIFI_STA_GOT_IP:
-    /* print IP address */
-      Serial.print("IP Address: ");
-      Serial.println(WiFi.localIP());
+		case ARDUINO_EVENT_WIFI_STA_GOT_IP:
+		/* print IP address */
+			Serial.print("IP Address: ");
+			Serial.println(WiFi.localIP());
 
-      if (connected)
-        connect_to_mqtt();
-      break;
+			if (connected)
+				connect_to_mqtt();
+			break;
 
-    case ARDUINO_EVENT_WIFI_STA_DISCONNECTED:
-      Serial.println("WiFi connection lost. Reconnecting..");
-      display_connecting_to_wifi();
+		case ARDUINO_EVENT_WIFI_STA_DISCONNECTED:
+			Serial.println("WiFi connection lost. Reconnecting..");
+			display_connecting_to_wifi();
 
-      /* ensure not to attempt MQTT reconnection while WiFi disconnected */
-      xTimerStop(mqtt_reconnection_timer, 0);
+			/* ensure not to attempt MQTT reconnection while WiFi disconnected */
+			xTimerStop(mqtt_reconnection_timer, 0);
 
-      /*
-        set the reconnection flag if reset,
-        capture epoch time at disconnect
-      */
-      if (!reconnecting)
-      {
-        reconnecting = true;
-        reconnect_millis = millis();
-      }
+			/*
+				set the reconnection flag if reset,
+				capture epoch time at disconnect
+			*/
+			if (!reconnecting)
+			{
+				reconnecting = true;
+				reconnect_millis = millis();
+			}
 
-      /*
-        if reconnecting,
-        measure time elapsed since disconnect,
-        compare with set connection timeout duration
-        if exceeded, restart the device
-      */
-      else if (reconnecting)
-      {
-        if ((millis() - reconnect_millis) >= reconnect_timeout)
-        {
-          delay(3000);
-          ESP.restart();
-          delay(5000);
-        }
-      }
+			/*
+				if reconnecting,
+				measure time elapsed since disconnect,
+				compare with set connection timeout duration
+				if exceeded, restart the device
+			*/
+			else if (reconnecting)
+			{
+				if ((millis() - reconnect_millis) >= reconnect_timeout)
+				{
+					delay(3000);
+					ESP.restart();
+					delay(5000);
+				}
+			}
 
-      break;
-  }
+			break;
+	}
 }
 
 /**
@@ -425,38 +424,38 @@ void wifi_event(WiFiEvent_t event)
 */
 void mqtt_setup_once()
 {
-  /* defining the declared MQTT reconnection timer */
-  mqtt_reconnection_timer = xTimerCreate("mqtt_timer", pdMS_TO_TICKS(2000), pdFALSE, (void *)0, reinterpret_cast<TimerCallbackFunction_t>(connect_to_mqtt));
+	/* defining the declared MQTT reconnection timer */
+	mqtt_reconnection_timer = xTimerCreate("mqtt_timer", pdMS_TO_TICKS(2000), pdFALSE, (void *)0, reinterpret_cast<TimerCallbackFunction_t>(connect_to_mqtt));
 
-  /* setting up Async MQTT client event-handling callback functions */
+	/* setting up Async MQTT client event-handling callback functions */
 
-  /* called handler when device connects to MQTT broker */
-  mqtt_client.onConnect(on_mqtt_connect);
-  /* handler for when device disconnects from MQTT broker */
-  mqtt_client.onDisconnect(on_mqtt_disconnect);
-  /* handler for when device subscribes to an MQTT topic */
-  mqtt_client.onSubscribe(on_mqtt_subscribe);
-  /* handler for when device unsubscribes from an MQTT topic */
-  mqtt_client.onUnsubscribe(on_mqtt_unsubscribe);
-  /* handler for when device receives a message published on any subscribed MQTT topic */
-  mqtt_client.onMessage(on_mqtt_message);
-  /* handler for when device publishes a message to an MQTT topic */
-  mqtt_client.onPublish(on_mqtt_publish);
+	/* called handler when device connects to MQTT broker */
+	mqtt_client.onConnect(on_mqtt_connect);
+	/* handler for when device disconnects from MQTT broker */
+	mqtt_client.onDisconnect(on_mqtt_disconnect);
+	/* handler for when device subscribes to an MQTT topic */
+	mqtt_client.onSubscribe(on_mqtt_subscribe);
+	/* handler for when device unsubscribes from an MQTT topic */
+	mqtt_client.onUnsubscribe(on_mqtt_unsubscribe);
+	/* handler for when device receives a message published on any subscribed MQTT topic */
+	mqtt_client.onMessage(on_mqtt_message);
+	/* handler for when device publishes a message to an MQTT topic */
+	mqtt_client.onPublish(on_mqtt_publish);
 
-  /* setting a client ID, needed for final message retention */
-  mqtt_client.setClientId(mqtt_client_id);
-  /* setting up client keep-alive (heartbeat packet) timer */
-  mqtt_client.setKeepAlive(60);
+	/* setting a client ID, needed for final message retention */
+	mqtt_client.setClientId(mqtt_client_id);
+	/* setting up client keep-alive (heartbeat packet) timer */
+	mqtt_client.setKeepAlive(60);
 
-  /* setting up LWT for the client in case of unprecedented disconnection */
-  connected_to_mqtt["id"] = mqtt_client_id; /* checkpoint */
-  connected_to_mqtt["connected"] = 0; /* connected to MQTT */
+	/* setting up LWT for the client in case of unprecedented disconnection */
+	connected_to_mqtt["id"] = mqtt_client_id; /* checkpoint */
+	connected_to_mqtt["connected"] = 0; /* connected to MQTT */
 
-  /* serialising JSON object to JSON string */
-  String connection_info;
-  serializeJson(connected_to_mqtt, connection_info);
+	/* serialising JSON object to JSON string */
+	String connection_info;
+	serializeJson(connected_to_mqtt, connection_info);
 
-  mqtt_client.setWill(CONNECTED, 2, false, connection_info.c_str());
+	mqtt_client.setWill(CONNECTED, 2, false, connection_info.c_str());
 }
 
 /**
@@ -466,25 +465,25 @@ void mqtt_setup_once()
 */
 void mqtt_setup_repeated()
 {
-  /* setting the MQTT client's credentials to connect to the server */
+	/* setting the MQTT client's credentials to connect to the server */
 
-  /* configuring the broker credentials into the client object to connect */
-  mqtt_client.setCredentials(broker_username, broker_password);
+	/* configuring the broker credentials into the client object to connect */
+	mqtt_client.setCredentials(broker_username, broker_password);
 
-  /*
-    set up with either domain name or IP Address,
-    depending on which was given
-  */
-  if (domain)
-  {
-    Serial.println("using domain name");
-    mqtt_client.setServer(broker_host, 1883);
-  }
-  else if (!domain)
-  {
-    Serial.println("using IP address");
-    mqtt_client.setServer(broker_ip, 1883);
-  }
+	/*
+		set up with either domain name or IP Address,
+		depending on which was given
+	*/
+	if (domain)
+	{
+		Serial.println("using domain name");
+		mqtt_client.setServer(broker_host, 1883);
+	}
+	else if (!domain)
+	{
+		Serial.println("using IP address");
+		mqtt_client.setServer(broker_ip, 1883);
+	}
 }
 
 /**
@@ -494,9 +493,9 @@ void mqtt_setup_repeated()
 */
 void connect_to_mqtt()
 {
-  // display_connecting_to_mqtt();
-  Serial.println("Connecting to MQTT broker...");
-  mqtt_client.connect();
+	// display_connecting_to_mqtt();
+	Serial.println("Connecting to MQTT broker...");
+	mqtt_client.connect();
 }
 
 /**
@@ -508,32 +507,32 @@ void connect_to_mqtt()
 */
 void on_mqtt_connect(bool session_present)
 {
-  Serial.println("Connected to MQTT!");
-  Serial.print("Session present: ");
-  Serial.println(session_present);
+	Serial.println("Connected to MQTT!");
+	Serial.print("Session present: ");
+	Serial.println(session_present);
 
-  /* publish to the web app that the device is MQTT (and WiFi) connected */
+	/* publish to the web app that the device is MQTT (and WiFi) connected */
 
-  connected_to_mqtt["id"] = mqtt_client_id; /* checkpoint */
+	connected_to_mqtt["id"] = mqtt_client_id; /* checkpoint */
 
-  connected_to_mqtt["connected"] = true; /* connected to MQTT */
+	connected_to_mqtt["connected"] = true; /* connected to MQTT */
 
-  /* serialising JSON object to JSON string */
+	/* serialising JSON object to JSON string */
 
-  String connection_info;
-  serializeJson(connected_to_mqtt, connection_info);
-  Serial.println(connection_info.c_str());
+	String connection_info;
+	serializeJson(connected_to_mqtt, connection_info);
+	Serial.println(connection_info.c_str());
 
-  delayMicroseconds(3000000);
+	delayMicroseconds(3000000);
 
-  mqtt_client.publish(CONNECTED, 2, false, connection_info.c_str());
+	mqtt_client.publish(CONNECTED, 2, false, connection_info.c_str());
 
-  /* subscribe to the relevant topics */
+	/* subscribe to the relevant topics */
 
-  mqtt_client.subscribe(SHIFT_ON_OFF, 2);
-  mqtt_client.subscribe(RESPONSE, 2);
-  mqtt_client.subscribe(ALARM, 2);
-  mqtt_client.subscribe(CHKS_OVERDUE, 2);
+	mqtt_client.subscribe(SHIFT_ON_OFF, 2);
+	mqtt_client.subscribe(RESPONSE, 2);
+	mqtt_client.subscribe(ALARM, 2);
+	mqtt_client.subscribe(CHKS_OVERDUE, 2);
 }
 
 /**
@@ -545,11 +544,11 @@ void on_mqtt_connect(bool session_present)
 */
 void on_mqtt_disconnect(AsyncMqttClientDisconnectReason reason)
 {
-  Serial.println("Disconnected from MQTT.");
-  Serial.printf("Reason: %d\n", reason);
+	Serial.println("Disconnected from MQTT.");
+	Serial.printf("Reason: %d\n", reason);
 
-  if (WiFi.isConnected())
-    xTimerStart(mqtt_reconnection_timer, 0);
+	if (WiFi.isConnected())
+		xTimerStart(mqtt_reconnection_timer, 0);
 }
 
 /**
@@ -562,11 +561,11 @@ void on_mqtt_disconnect(AsyncMqttClientDisconnectReason reason)
 */
 void on_mqtt_subscribe(uint16_t packet_id, uint8_t qos)
 {
-  Serial.println("Subscribe acknowledged.");
-  Serial.print("  packet ID: ");
-  Serial.println(packet_id);
-  Serial.print("  qos: ");
-  Serial.println(qos);
+	Serial.println("Subscribe acknowledged.");
+	Serial.print("  packet ID: ");
+	Serial.println(packet_id);
+	Serial.print("  qos: ");
+	Serial.println(qos);
 }
 
 /**
@@ -578,9 +577,9 @@ void on_mqtt_subscribe(uint16_t packet_id, uint8_t qos)
 */
 void on_mqtt_unsubscribe(uint16_t packet_id)
 {
-  Serial.print("Unsubscribe acknowledged.");
-  Serial.print(" packet ID: ");
-  Serial.println(packet_id);
+	Serial.print("Unsubscribe acknowledged.");
+	Serial.print(" packet ID: ");
+	Serial.println(packet_id);
 }
 
 /**
@@ -598,65 +597,62 @@ void on_mqtt_unsubscribe(uint16_t packet_id)
 */
 void on_mqtt_message(char *topic, char *payload, AsyncMqttClientMessageProperties properties, size_t len, size_t index, size_t total)
 { 
-  Serial.println("Publish received.");
-  Serial.print("  topic: ");
-  Serial.println(topic);
+	Serial.println("Publish received.");
+	Serial.print("  topic: ");
+	Serial.println(topic);
 
-  /* dumping the received bytearray payload into a string */
-  String message;
-  for (unsigned int i = 0; i < len; i++)
-    message += (char)payload[i];
+	/* dumping the received bytearray payload into a string */
+	String message;
+	for (unsigned int i = 0; i < len; i++)
+		message += (char)payload[i];
 
-  Serial.println(message);
+	Serial.println(message);
 
-  /* checking the topic on which the incoming message was published */
-  if (!strcmp(topic, SHIFT_ON_OFF))
-  {
-    if (message == "ON")
-      shift_status = true;
-    else
-    {
-      /* also used to notify the checkpoints that the monitoring platform has disconnected from the broker */
-      /* reason could be that the server has gone down */
+	/* checking the topic on which the incoming message was published */
+	if (!strcmp(topic, SHIFT_ON_OFF))
+	{
+		if (message == "ON")
+			shift_status = true;
+		else
+		{
+			/* also used to notify the checkpoints that the monitoring platform has disconnected from the broker */
+			/* reason could be that the server has gone down */
 
-      shift_status = false; /* set shift to 'over' */
-      alarm_on_off = false; /* reset the alarm flag */
-      silence_alarm(); /* deactivate the alarm */
-    }
-  }
+			shift_status = false; /* set shift to 'over' */
+			silence_alarm(); /* deactivate the alarm */
+		}
+	}
 
-  else if (!strcmp(topic, ALARM))
-  {
-    if (message == "ON")
-    {
-      Serial.println("alarm triggered");
-      alarm_on_off = true;
-      raise_alarm();
-    }
-    else
-    {
-      alarm_on_off = false;
-      alarm_reason = 0;
-      Serial.println("alarm silenced");
-      silence_alarm();
-    }
-  }
+	else if (!strcmp(topic, ALARM))
+	{
+		if (message == "ON")
+		{
+			Serial.println("alarm triggered");
+			trigger_alarm();
+		}
+		else
+		{
+			alarm_reason = 0;
+			Serial.println("alarm silenced");
+			silence_alarm();
+		}
+	}
 
-  else if (!strcmp(topic, CHKS_OVERDUE))
-  {
-    alarm_reason = 6;
-  }
+	else if (!strcmp(topic, CHKS_OVERDUE))
+	{
+		alarm_reason = 6;
+	}
 
-  else if (!strcmp(topic, RESPONSE))
-  {
-    uint8_t code = atoi(message.c_str());
+	else if (!strcmp(topic, RESPONSE))
+	{
+		uint8_t code = atoi(message.c_str());
 
-    if (code == 1)
-    /* set flag to display success message on the LCD screen */
-      success = true;
-    else
-      alarm_reason = code;
-  }
+		if (code == 1)
+		/* set flag to display success message on the LCD screen */
+			display_success = true;
+		else
+			alarm_reason = code;
+	}
 }
 
 /**
@@ -668,9 +664,9 @@ void on_mqtt_message(char *topic, char *payload, AsyncMqttClientMessagePropertie
 */
 void on_mqtt_publish(uint16_t packet_id)
 {
-  Serial.print("Publish acknowledged.");
-  Serial.print(" packet ID: ");
-  Serial.println(packet_id);
+	Serial.print("Publish acknowledged.");
+	Serial.print(" packet ID: ");
+	Serial.println(packet_id);
 }
 
 /**
@@ -681,7 +677,7 @@ void on_mqtt_publish(uint16_t packet_id)
 */
 void IRAM_ATTR launch_wifi_config()
 {
-  config = true;
+	config = true;
 }
 
 /**
@@ -694,141 +690,141 @@ void IRAM_ATTR launch_wifi_config()
 */
 void dump_byte_array(byte *buffer, byte buffer_size)
 {
-  for (byte i = 0; i < buffer_size; i++)
-  {
-    if (i == 0)
-      card_id += (buffer[i] < 0x10 ? "0" : "");
-    else
-      card_id += (buffer[i] < 0x10 ? " 0" : " ");
+	for (byte i = 0; i < buffer_size; i++)
+	{
+		if (i == 0)
+			card_id += (buffer[i] < 0x10 ? "0" : "");
+		else
+			card_id += (buffer[i] < 0x10 ? " 0" : " ");
 
-    card_id += String(buffer[i], HEX);
-  }
+		card_id += String(buffer[i], HEX);
+	}
 }
 
 void setup() {
-  /* setting up the ESP32 in station mode (WiFi client) */
-  WiFi.mode(WIFI_STA);
+	/* setting up the ESP32 in station mode (WiFi client) */
+	WiFi.mode(WIFI_STA);
 
-  Serial.begin(115200);
+	Serial.begin(115200);
 
-  /* initialise SPI, I2C, MFRC, RTC and LCD comms */
+	/* initialise SPI, I2C, MFRC, RTC and LCD comms */
 
-  SPI.begin();
-  reader.PCD_Init();
-  my_RTC.begin();
-  initialize_display();
+	SPI.begin();
+	reader.PCD_Init();
+	my_RTC.begin();
+	initialize_display();
 
-  /*
-    set time of the RTC
-    adjusts it to time at which the code was compiled
-    time reference is time on the device on which the compiler ran
-    NB: set timezone of device to GMT+0 to set correct UTC epoch time
-        i.e. without timezone offset
-  */
-  if (my_RTC.lostPower())
-    my_RTC.adjust(DateTime(F(__DATE__), F(__TIME__)));
+	/*
+		set time of the RTC
+		adjusts it to time at which the code was compiled
+		time reference is time on the device on which the compiler ran
+		NB: set timezone of device to GMT+0 to set correct UTC epoch time
+				i.e. without timezone offset
+	*/
+	if (my_RTC.lostPower())
+		my_RTC.adjust(DateTime(F(__DATE__), F(__TIME__)));
 
-  /* setting up alarmLED and buzzer pins */
-  initialize_alarm();
+	/* setting up alarmLED and buzzer pins */
+	initialize_alarm();
 
-  /* setting up input pin to listen for on-demand trigger (button) */
-  pinMode(WIFI_CONFIG_PIN, INPUT_PULLUP);
+	/* setting up input pin to listen for on-demand trigger (button) */
+	pinMode(WIFI_CONFIG_PIN, INPUT_PULLUP);
 
-  /* configure callback function to handle WiFi events */
-  WiFi.onEvent(wifi_event);
+	/* configure callback function to handle WiFi events */
+	WiFi.onEvent(wifi_event);
 
-  /* set up WiFi Manager configs, callbacks, parameters */
-  setup_wifi_manager();
+	/* set up WiFi Manager configs, callbacks, parameters */
+	setup_wifi_manager();
 
-  /* set up a hardware interrupt to trigger on-demand WiFi config portal */
-  attachInterrupt(digitalPinToInterrupt(WIFI_CONFIG_PIN), launch_wifi_config, FALLING);
+	/* set up a hardware interrupt to trigger on-demand WiFi config portal */
+	attachInterrupt(digitalPinToInterrupt(WIFI_CONFIG_PIN), launch_wifi_config, FALLING);
 }
 
 void loop()
 {
-  /* if WiFi config mode button pressed */
-  if (config)
-  {
-    connect_to_wifi();
+	/* if WiFi config mode button pressed */
+	if (config)
+	{
+		connect_to_wifi();
 
-    /* reset interrupt flag */
-    config = false;
-  }
-  
-  if (alarm_on_off)
-  {
-    if (alarm_reason == OVERDUE_SCAN)
-      display_scan_time_elapsed();
-    else
-      display_invalid_scan(alarm_reason);
-    return;
-  }
+		/* reset interrupt flag */
+		config = false;
+	}
+	
+	if (alarm_on_off)
+	{
+		if (alarm_reason == OVERDUE_SCAN)
+			display_scan_time_elapsed();
+		else
+			display_invalid_scan(alarm_reason);
+		return;
+	}
 
-  if (success)
-  {
-    display_valid_scan();
-    success = false;
-  }
+	if (display_success)
+	{
+		display_valid_scan();
+		display_success = false;
+	}
 
-  /* 
-    conditions with return statements:
-    running code below them is pointless hence early return, restart loop
-  */
+	/* 
+		conditions with return statements:
+		running code below them is pointless hence early return, restart loop
+	*/
 
-  /* if both WiFi and MQTT connected, display check on both */
-  if (WiFi.isConnected() && mqtt_client.connected())
-    display_default_text(DISPLAY_SUCCESS, DISPLAY_SUCCESS);
+	/* if both WiFi and MQTT connected, display check on both */
+	if (WiFi.isConnected() && mqtt_client.connected())
+		display_default_text(DISPLAY_SUCCESS, DISPLAY_SUCCESS);
 
-  /* if only WiFi connected: display check on WiFi, X on MQTT */
-  else if (WiFi.isConnected())
-  {
-    display_default_text(DISPLAY_SUCCESS, DISPLAY_FAILURE); return;
-  }
+	/* if only WiFi connected: display check on WiFi, X on MQTT */
+	else if (WiFi.isConnected())
+	{
+		display_default_text(DISPLAY_SUCCESS, DISPLAY_FAILURE); return;
+	}
 
-  /* if neither connected: display X on both */
-  else
-  {
-    display_default_text(DISPLAY_FAILURE, DISPLAY_FAILURE); return;
-  }
+	/* if neither connected: display X on both */
+	else
+	{
+		display_default_text(DISPLAY_FAILURE, DISPLAY_FAILURE); return;
+	}
 
-  /* checking if there is a 'new' RFID card in vicinity to scan */
-  if (!reader.PICC_IsNewCardPresent())
-    return;
+	/* checking if there is a 'new' RFID card in vicinity to scan */
+	if (!reader.PICC_IsNewCardPresent())
+		return;
 
-  if (!reader.PICC_ReadCardSerial())
-    return;
+	if (!reader.PICC_ReadCardSerial())
+		return;
 
-  /* dumping the scanned card's ID (hex number) into a string */
-  dump_byte_array(reader.uid.uidByte, reader.uid.size);
-  /* extracting the current epoch time */
-  DateTime now = my_RTC.now();
+	/* dumping the scanned card's ID (hex number) into a string */
+	dump_byte_array(reader.uid.uidByte, reader.uid.size);
+	/* extracting the current epoch time */
+	DateTime now = my_RTC.now();
 
-  display_scanning_verifying();
+	display_scanning_verifying();
 
-  /* saving the checkpoint's ID, scanned RFID UID and time of scan (epoch) into a JSON object */
+	/* saving the checkpoint's ID, scanned RFID UID and time of scan (epoch) into a JSON object */
 
-  sentry_scan_info["checkpoint-id"] = CHECKPOINT_ID; /* checkpoint */
-  sentry_scan_info["sentry-id"] = card_id; /* RFID UID */
-  sentry_scan_info["scan-time"] = now.unixtime() + 46; /* epoch time of scan */
+	sentry_scan_info["checkpoint-id"] = CHECKPOINT_ID; /* checkpoint */
+	sentry_scan_info["sentry-id"] = card_id; /* RFID UID */
+	sentry_scan_info["scan-time"] = now.unixtime() + 46; /* epoch time of scan */
 
-  /* serialising JSON object to JSON string */
-  String sent_sentry_info;
-  serializeJson(sentry_scan_info, sent_sentry_info);
+	/* serialising JSON object to JSON string */
+	String sent_sentry_info;
+	serializeJson(sentry_scan_info, sent_sentry_info);
 
-  /* 
-    publish - (required) convert JSON string to byte(char) array before publish
-    String.c_str() = const char*
-  */
+	/* 
+		publish - (required) convert JSON string to byte(char) array before publish
+		String.c_str() = const char*
+	*/
  
-  /* if scan not during shift - PROBLEM */
-  if (!shift_status)
-  {
-    mqtt_client.publish(OUTSIDE_SHIFT_SCAN, 2, false, sent_sentry_info.c_str());
-    alarm_reason = NO_SHIFT_SCAN;
-  }
-  else
-    mqtt_client.publish(SENTRY_SCAN_INFO, 2, false, sent_sentry_info.c_str());
+	/* if scan not during shift - PROBLEM */
+	if (!shift_status)
+	{
+		mqtt_client.publish(OUTSIDE_SHIFT_SCAN, 2, false, sent_sentry_info.c_str());
+		alarm_reason = NO_SHIFT_SCAN;
+	}
+	else
+		mqtt_client.publish(SENTRY_SCAN_INFO, 2, false, sent_sentry_info.c_str());
 
-  /* reset stored RFID UID to an empty string for next scan */
-  card_id = "";
+	/* reset stored RFID UID to an empty string for next scan */
+	card_id = "";
 }
