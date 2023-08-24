@@ -1,3 +1,6 @@
+#ifndef __INC_DISPLAY_LCD_H
+#define __INC_DISPLAY_LCD_H
+
 #include <Arduino.h>
 
 /**
@@ -19,3 +22,5 @@ void display_invalid_scan(uint8_t);
 void display_scan_time_elapsed();
 void scroll_text(int, String, int, int);
 void initialize_display();
+
+#endif		/* ifndef __INC_DISPLAY_LCD_H */

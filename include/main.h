@@ -1,3 +1,6 @@
+#ifndef __INC_MAIN_H
+#define __INC_MAIN_H
+
 #include <stdint.h>
 
 /* LED simulating alarm siren */
@@ -27,3 +30,5 @@ enum alerts_e {
 	OVERDUE_SCAN = 6,
 	NO_SHIFT_SCAN = 7
 };
+
+#endif		/* ifndef __INC_MAIN_H */

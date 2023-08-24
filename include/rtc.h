@@ -1,3 +1,6 @@
+#ifndef __INC_RTC_DS3231_H
+#define __INC_RTC_DS3231_H
+
 #include <Arduino.h>
 
 /*
@@ -20,3 +23,5 @@ inline DateTime get_time_now()
 {
 	return my_RTC.now();
 }
+
+#endif		/* ifndef __INC_RTC_DS3231_H */
