@@ -1,10 +1,11 @@
 #include <Arduino.h>
+#include <Wire.h>
 #include "main.h"
 #include "lcd.h"
 
 /*
 	library to interact with the LCD Screen via I2C,
-	depends on Wire.h, included in Arduino.h
+	depends on Wire.h, included
 */
 #include <LiquidCrystal_I2C.h>
 
@@ -231,11 +232,11 @@ void scroll_text(int row, String message, int delay_time, int lcd_columns)
  * initialize_display - sets up the lcd module and the I2C bus
  *
  * Return: Nothing
+ *
+ * Note: Wire.begin() should be called prior to this
 */
 void initialize_display()
 {
-	Wire.begin();
-
 	lcd.init();
 	lcd.backlight();
 

@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include <Wire.h>
 #include "main.h"
 
 /* necessary WiFi library */
@@ -18,7 +19,7 @@
 /*
 	library to interact with the DS3231 real-time clock, includes Wire.h
 */
-#include <RTClib.h>
+#include "rtc.h"
 
 /*
 	library to work with JSON data, used to send info to the backend server
@@ -159,11 +160,6 @@ MFRC522::MIFARE_Key key;
 
 /* string variable to store stringified RFID UID */
 String card_id;
-
-/* RTC definitions */
-
-/* active RTC instance */
-RTC_DS3231 my_RTC;
 
 /* JSON instantiations */
 
@@ -711,18 +707,10 @@ void setup() {
 
 	SPI.begin();
 	reader.PCD_Init();
-	my_RTC.begin();
+	Wire.begin();	/* For the LCD d-splay and RTC_DS3231 */
 	initialize_display();
+	initialize_RTC();
 
-	/*
-		set time of the RTC
-		adjusts it to time at which the code was compiled
-		time reference is time on the device on which the compiler ran
-		NB: set timezone of device to GMT+0 to set correct UTC epoch time
-				i.e. without timezone offset
-	*/
-	if (my_RTC.lostPower())
-		my_RTC.adjust(DateTime(F(__DATE__), F(__TIME__)));
 
 	/* setting up alarmLED and buzzer pins */
 	initialize_alarm();
@@ -797,7 +785,7 @@ void loop()
 	/* dumping the scanned card's ID (hex number) into a string */
 	dump_byte_array(reader.uid.uidByte, reader.uid.size);
 	/* extracting the current epoch time */
-	DateTime now = my_RTC.now();
+	DateTime now = get_time_now();
 
 	display_scanning_verifying();
 
