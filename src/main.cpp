@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include <Wire.h>
+#include <SPI.h>
 #include "main.h"
 
 /* necessary WiFi library */
@@ -11,14 +12,10 @@
 */
 #include <ESPAsyncWiFiManager.h>
 
-/*
-	library to interact with RFID card reader, includes SPI.h
-*/
-#include <MFRC522.h>
+/* Functions to interact with RFID card reader */
+#include "rfid.h"
 
-/*
-	library to interact with the DS3231 real-time clock, includes Wire.h
-*/
+/* Functions to interact with the real-time clock */
 #include "rtc.h"
 
 /*
@@ -147,20 +144,6 @@ volatile bool config = false;
 /* shift ongoing/over */
 volatile bool shift_status = false;
 
-/* definitions for the RFID card reader */
-
-/* connected to MFRC reset pin */
-#define RST_PIN 4
-/* SPI chip-select pin */
-#define SS_PIN 5
-
-/* active MFRC instance */
-MFRC522 reader(SS_PIN, RST_PIN);
-MFRC522::MIFARE_Key key;
-
-/* string variable to store stringified RFID UID */
-String card_id;
-
 /* JSON instantiations */
 
 /* JSON object to store the checkpoint ID, RFID UID and time of scan */
@@ -187,10 +170,6 @@ void on_mqtt_publish(uint16_t);
 void mqtt_setup_once();
 void mqtt_setup_repeated();
 void launch_wifi_config();
-
-/* RFID card reader functions */
-
-void dump_byte_array(byte *, byte);
 
 volatile uint8_t alarm_reason;
 
@@ -676,38 +655,18 @@ void IRAM_ATTR launch_wifi_config()
 	config = true;
 }
 
-/**
- * dump_byte_array - dumps the scanned hex RFID UID into a string literal
- * 
- * @buffer: buffer storing scanned RFID UID
- * @buffer_size: length of the RFID UID in bytes (4, 7 or 10)
- * 
- * Return: string literal representation of the scanned RFID UID
-*/
-void dump_byte_array(byte *buffer, byte buffer_size)
-{
-	for (byte i = 0; i < buffer_size; i++)
-	{
-		if (i == 0)
-			card_id += (buffer[i] < 0x10 ? "0" : "");
-		else
-			card_id += (buffer[i] < 0x10 ? " 0" : " ");
-
-		card_id += String(buffer[i], HEX);
-	}
-}
-
 void setup() {
 	/* setting up the ESP32 in station mode (WiFi client) */
 	WiFi.mode(WIFI_STA);
 
 	Serial.begin(115200);
 
-	/* initialise SPI, I2C, MFRC, RTC and LCD comms */
+	/* initialise SPI, I2C, RFID, RTC and LCD comms */
 
 	SPI.begin();
-	reader.PCD_Init();
-	Wire.begin();	/* For the LCD d-splay and RTC_DS3231 */
+	initialize_rfid();
+
+	Wire.begin();	/* For the LCD display and RTC_DS3231 */
 	initialize_display();
 	initialize_RTC();
 
@@ -775,15 +734,10 @@ void loop()
 		display_default_text(DISPLAY_FAILURE, DISPLAY_FAILURE); return;
 	}
 
-	/* checking if there is a 'new' RFID card in vicinity to scan */
-	if (!reader.PICC_IsNewCardPresent())
+	/* Scanning any 'new' RFID card in the vicinity */
+	if (!rfid_read_new_card())
 		return;
 
-	if (!reader.PICC_ReadCardSerial())
-		return;
-
-	/* dumping the scanned card's ID (hex number) into a string */
-	dump_byte_array(reader.uid.uidByte, reader.uid.size);
 	/* extracting the current epoch time */
 	DateTime now = get_time_now();
 
@@ -812,7 +766,4 @@ void loop()
 	}
 	else
 		mqtt_client.publish(SENTRY_SCAN_INFO, 2, false, sent_sentry_info.c_str());
-
-	/* reset stored RFID UID to an empty string for next scan */
-	card_id = "";
 }

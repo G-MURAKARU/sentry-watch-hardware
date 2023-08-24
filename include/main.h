@@ -2,9 +2,13 @@
 
 /* LED simulating alarm siren */
 #define ALARM_LED 32
-
 /* buzzer simulating alarm siren */
 #define ALARM_BUZZER 33
+
+/* connected to MFRC reader reset pin */
+#define MFRC_RST_PIN 4
+/* MFRC reader SPI chip-select pin */
+#define MFRC_SS_PIN 5
 
 /* checkpoint ID to send with a sentry scan */
 #define CHECKPOINT_ID "A";

@@ -229,7 +229,7 @@ void scroll_text(int row, String message, int delay_time, int lcd_columns)
 }
 
 /**
- * initialize_display - sets up the lcd module and the I2C bus
+ * initialize_display - sets up the lcd module on the I2C bus
  *
  * Return: Nothing
  *
