@@ -13,6 +13,9 @@
 /* MFRC reader SPI chip-select pin */
 #define MFRC_SS_PIN 5
 
+/* For starting Up WiFi config mode of WifiManager */
+#define WIFI_CONFIG_PIN 0
+
 /* checkpoint ID to send with a sentry scan */
 #define CHECKPOINT_ID "A";
 

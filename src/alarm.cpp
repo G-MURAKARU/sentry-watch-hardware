@@ -10,7 +10,7 @@
 
 
 /* Ticker object for flashing the onboard LED */
-static Ticker ticker;
+static Ticker alarm_ticker;
 
 /* Global indicator for whether alarm is triggered/silenced */
 volatile bool alarm_on_off = false;
@@ -43,7 +43,7 @@ static void toggle_alarm()
 void trigger_alarm()
 {
 	alarm_on_off = true;
-	ticker.attach(ALARM_TOGGLE_PERIOD, toggle_alarm);
+	alarm_ticker.attach(ALARM_TOGGLE_PERIOD, toggle_alarm);
 }
 
 /**
@@ -54,7 +54,7 @@ void trigger_alarm()
 void silence_alarm()
 {
 	alarm_on_off = false;
-	ticker.detach();
+	alarm_ticker.detach();
 	digitalWrite(ALARM_LED, LOW);
 	noTone(ALARM_BUZZER);
 }
