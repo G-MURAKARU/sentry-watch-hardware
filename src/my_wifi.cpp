@@ -9,8 +9,8 @@
 #include <WiFi.h>
 
 /*
-	WiFi Manager to help with setting WiFi credentials at runtime
-	and asynchronous connection handling
+ *  WiFi Manager to help with setting WiFi credentials at runtime
+ *   and asynchronous connection handling
 */
 #include <ESPAsyncWiFiManager.h>
 
@@ -22,16 +22,24 @@ static AsyncWiFiManager wifi_manager(&server, &dns);
 
 /* custom WiFi Manager parameters to capture MQTT broker info */
 
-/* message instructing user to key in either MQTT broker domain name or MQTT broker IP Address*/
-static AsyncWiFiManagerParameter domain_or_ip("<p>Enter either the broker's IP Address or domain name(URL).</p><p>Leave the other box blank.</p>");
+/* message instructing user to key in either MQTT broker domain name
+ *  or MQTT broker IP Address
+ */
+static AsyncWiFiManagerParameter domain_or_ip(
+	"<p>Enter either the broker's IP Address or domain name(URL).</p>"
+	"<p>Leave the other box blank.</p>");
 /* broker domain name form field */
-static AsyncWiFiManagerParameter mqtt_host_domain("broker-host-domain", "MQTT Domain", NULL, MQTT_HOST_DOMAIN_MAX_LEN);
+static AsyncWiFiManagerParameter mqtt_host_domain(
+	"broker-host-domain", "MQTT Domain", NULL, MQTT_HOST_DOMAIN_MAX_LEN);
 /* broker IP address form field */
-static AsyncWiFiManagerParameter mqtt_host_ip("broker-host-ip", "MQTT IP Address", NULL, MQTT_HOST_IP_MAX_LEN);
+static AsyncWiFiManagerParameter mqtt_host_ip(
+	"broker-host-ip", "MQTT IP Address", NULL, MQTT_HOST_IP_MAX_LEN);
 /* broker username form field */
-static AsyncWiFiManagerParameter mqtt_user("broker-user", "MQTT Username", NULL, MQTT_BROKER_USER_MAX_LEN);
+static AsyncWiFiManagerParameter mqtt_user(
+	"broker-user", "MQTT Username", NULL, MQTT_BROKER_USER_MAX_LEN);
 /* broker password form field */
-static AsyncWiFiManagerParameter mqtt_pass("broker-pass", "MQTT Password", NULL, MQTT_BROKER_PASS_MAX_LEN);
+static AsyncWiFiManagerParameter mqtt_pass(
+	"broker-pass", "MQTT Password", NULL, MQTT_BROKER_PASS_MAX_LEN);
 
 /* initialising variables to handle WiFi disconnection */
 
@@ -264,6 +272,8 @@ static void wifi_event(WiFiEvent_t event)
 			}
 
 			break;
+		default:
+			Serial.printf("Wifi Event occurred: %d\n", (int)event);
 	}
 }
 

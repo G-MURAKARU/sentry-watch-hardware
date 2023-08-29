@@ -218,7 +218,7 @@ static void on_mqtt_connect(bool session_present)
 static void on_mqtt_disconnect(AsyncMqttClientDisconnectReason reason)
 {
 	Serial.println("Disconnected from MQTT.");
-	Serial.printf("Reason: %d\n", reason);
+	Serial.printf("Reason: %d\n", (int)reason);
 
 	if (wifi_isConnected())
 		mqtt_reconnection_timer.attach(MQTT_RECONNECT_ATTEMPT_PERIOD, connect_to_mqtt);

@@ -3,6 +3,7 @@
 
 #include <Arduino.h>
 
+/* WiFi connection functions */
 void initialize_wifi();
 bool wifi_isConnected();
 void check_wifi_config_requested();
