@@ -53,7 +53,7 @@ volatile unsigned long reconnect_millis = 0;
 /* device's WiFi reconnection state flag */
 volatile bool reconnecting = false;
 
-/* 
+/*
 	configured WiFi
 	avoid conflict with WiFi GotIP callback
 */
@@ -63,12 +63,9 @@ volatile bool configured = false;
 volatile bool config = false;
 
 /**
- * set_broker_credentials - saves the received broker credentials into defined variables
- * 
- * @host: MQTT broker's IP Address/domain name
- * @username: MQTT broker's username
- * @password: MQTT broker's password
- * 
+ * set_broker_credentials - saves the received broker credentials into
+ *  defined global variables
+ *
  * Return: Nothing
 */
 static void set_broker_credentials()
@@ -129,7 +126,7 @@ static void set_broker_credentials()
  *                   starts an access point with name "Checkpoint A"
  *                   goes into a blocking loop awaiting configuration,
  *                   resets all WiFi Manager configs and credentials
- * 
+ *
  * Return: Nothing
 */
 static void configure_wifi()
@@ -161,9 +158,9 @@ static void configure_wifi()
 /**
  * config_mode_callback - callback handler function,
  *                        called before the device enters configuration mode
- * 
+ *
  * @my_wifi_manager: active Async WiFi Manager instance (struct)
- * 
+ *
  * Return: Nothing
 */
 void config_mode_callback(AsyncWiFiManager *my_wifi_manager)
@@ -175,8 +172,9 @@ void config_mode_callback(AsyncWiFiManager *my_wifi_manager)
 }
 
 /**
- * setup_wifi - sets up WiFi Manager and Config Portal, also allows input of MQTT broker's info
- * 
+ * setup_wifi_manager - sets up WiFi Manager and Config Portal, also allows
+ *  input of MQTT broker's info
+ *
  * Return: Nothing
 */
 void setup_wifi_manager()
@@ -209,9 +207,9 @@ void setup_wifi_manager()
 /**
  * wifi_event - WiFi event-driven handler function
  *              executes logic depending on detected WiFi event
- * 
+ *
  * @event: WiFi event (macro)
- * 
+ *
  * Return: Nothing
 */
 static void wifi_event(WiFiEvent_t event)
@@ -279,8 +277,8 @@ static void wifi_event(WiFiEvent_t event)
 
 /**
  * launch_wifi_config - sets flag that indicates that device should go into
- *                      on-demand WiFi config mode, triggered by ISR
- * 
+ *  on-demand WiFi config mode, triggered by ISR
+ *
  * Return: Nothing
 */
 void IRAM_ATTR launch_wifi_config()
@@ -288,7 +286,12 @@ void IRAM_ATTR launch_wifi_config()
 	config = true;
 }
 
-
+/**
+ * check_wifi_config_requested - checks the global config variable to
+ *  know if wifi config is requested and enters config mode if requested
+ *
+ * Return: Nothing
+*/
 void check_wifi_config_requested()
 {
     if (config)
@@ -303,7 +306,7 @@ void check_wifi_config_requested()
 /**
  * initialize_wifi - initializes the WiFi and WiFiManager for configuring
  *  required system properties
- * 
+ *
  * Return: Nothing
 */
 void initialize_wifi()
@@ -325,7 +328,11 @@ void initialize_wifi()
 	setup_wifi_manager();
 }
 
-
+/**
+ * wifi_isConnected - checks if WiFi is connected
+ *
+ * Return: true if connected, false otherwise
+*/
 bool wifi_isConnected()
 {
     return WiFi.isConnected();

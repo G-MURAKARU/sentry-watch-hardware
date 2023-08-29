@@ -8,20 +8,20 @@
 #include "rfid.h"
 
 /*
-	library to work with JSON data, used to send info to the backend server
-*/
+ *	library to work with JSON data, used to send info to the backend server
+ */
 #include <ArduinoJson.h>
 
 /*
-	MQTT library helps with setting up the MQTT client
-	and asynchronous connection handling
-*/
+ *	MQTT library helps with setting up the MQTT client
+ *	and asynchronous connection handling
+ */
 #include <AsyncMqttClient.h>
 
 /*
-	Library for performing fixed interval operations in a
-	non-blocking manner
-*/
+ *	Library for performing fixed interval operations in a
+ *	non-blocking manner
+ */
 #include <Ticker.h>
 
 /* setting default values for MQTT broker info */
@@ -61,7 +61,7 @@ static const char *mqtt_client_id = "checkpoint-A";
 #define ALARM "sentry-platform/backend-server/alarm"
 
 /* publish topics */
- 
+
 /* topic to publish scanned sentry's information */
 #define SENTRY_SCAN_INFO "sentry-platform/checkpoints/sentry-scan-info"
 /* topic to publish connection status */
@@ -90,7 +90,7 @@ static void on_mqtt_publish(uint16_t);
 
 /**
  * mqtt_setup_once - MQTT client configs that should only be set once, at device startup
- * 
+ *
  * Return: Nothing
 */
 void mqtt_setup_once()
@@ -128,7 +128,7 @@ void mqtt_setup_once()
 
 /**
  * mqtt_setup_repeated - MQTT client setup code that should be run on every WiFi (re)connection
- * 
+ *
  * Return: Nothing
 */
 void mqtt_setup_repeated()
@@ -156,7 +156,7 @@ void mqtt_setup_repeated()
 
 /**
  * connect_to_mqtt - connects the ESP MQTT client to the MQTT broker over WiFi
- * 
+ *
  * Return: Nothing
 */
 void connect_to_mqtt()
@@ -166,6 +166,11 @@ void connect_to_mqtt()
 	mqtt_client.connect();
 }
 
+/**
+ * mqtt_stop_reconnect - stops the repetitive MQTT reconnection attempts
+ *
+ * Return: Nothing
+*/
 void mqtt_stop_reconnect()
 {
 	mqtt_reconnection_timer.detach();
@@ -173,9 +178,9 @@ void mqtt_stop_reconnect()
 
 /**
  * on_mqtt_connect - event handler for post MQTT connection actions
- * 
+ *
  * @session_present: id of the present session
- * 
+ *
  * Return: nothing
 */
 static void on_mqtt_connect(bool session_present)
@@ -183,6 +188,7 @@ static void on_mqtt_connect(bool session_present)
 	Serial.println("Connected to MQTT!");
 	Serial.print("Session present: ");
 	Serial.println(session_present);
+	mqtt_stop_reconnect();
 
 	/* publish to the web app that the device is MQTT (and WiFi) connected */
 
@@ -210,9 +216,9 @@ static void on_mqtt_connect(bool session_present)
 
 /**
  * on_mqtt_disconnect - event handler for post MQTT disconnection actions
- * 
+ *
  * @reason: reason code for MQTT disconnection
- * 
+ *
  * Return: nothing
 */
 static void on_mqtt_disconnect(AsyncMqttClientDisconnectReason reason)
@@ -226,10 +232,10 @@ static void on_mqtt_disconnect(AsyncMqttClientDisconnectReason reason)
 
 /**
  * on_mqtt_subscribe - event handler for post MQTT subscription actions
- * 
+ *
  * @packet_id: ID of subscription return packet
  * @qos: subscription's quality-of-service level
- * 
+ *
  * Return: nothing
 */
 static void on_mqtt_subscribe(uint16_t packet_id, uint8_t qos)
@@ -243,9 +249,9 @@ static void on_mqtt_subscribe(uint16_t packet_id, uint8_t qos)
 
 /**
  * on_mqtt_unsubscribe - event handler for post MQTT unsubscription actions
- * 
+ *
  * @packet_id: ID of unsubscription return packet
- * 
+ *
  * Return: nothing
 */
 static void on_mqtt_unsubscribe(uint16_t packet_id)
@@ -258,18 +264,18 @@ static void on_mqtt_unsubscribe(uint16_t packet_id)
 /**
  * on_mqtt_message - event handler for post MQTT message reception actions
  *                   main controller for directing follow-up actions for messages received from subscriptions
- * 
+ *
  * @topic: MQTT topic on which message was posted
  * @payload: message contents
  * @properties: MQTT message properties (retain flag, QoS, etc)
  * @len: length of the MQTT payload string
  * @index: index of the incoming MQTT message
  * @total: total length of topic + payload
- * 
+ *
  * Return: Nothing
 */
 static void on_mqtt_message(char *topic, char *payload, AsyncMqttClientMessageProperties properties, size_t len, size_t index, size_t total)
-{ 
+{
 	Serial.println("Publish received.");
 	Serial.print("  topic: ");
 	Serial.println(topic);
@@ -330,9 +336,9 @@ static void on_mqtt_message(char *topic, char *payload, AsyncMqttClientMessagePr
 
 /**
  * on_mqtt_publish - event handler for post MQTT publish actions
- * 
+ *
  * @packet_id: ID of publish return packet
- * 
+ *
  * Return: nothing
 */
 static void on_mqtt_publish(uint16_t packet_id)
@@ -342,13 +348,22 @@ static void on_mqtt_publish(uint16_t packet_id)
 	Serial.println(packet_id);
 }
 
-
+/**
+ * mqtt_isConnected - checks if MQTT is connected to the broker
+ *
+ * Return: true if connected, false otherwise
+*/
 bool mqtt_isConnected()
 {
 	return mqtt_client.connected();
 }
 
-
+/**
+ * mqtt_send_scanned_card - sends a scanned card in the global card_id
+ *  to the sentry platform for verifying
+ *
+ * Return: Nothing
+*/
 void mqtt_send_scanned_card()
 {
 	/* JSON object to store the checkpoint ID, RFID UID and time of scan */
@@ -367,11 +382,11 @@ void mqtt_send_scanned_card()
 	String sent_sentry_info;
 	serializeJson(sentry_scan_info, sent_sentry_info);
 
-	/* 
+	/*
 		publish - (required) convert JSON string to byte(char) array before publish
 		String.c_str() = const char*
 	*/
- 
+
 	/* if scan not during shift - PROBLEM */
 	if (!shift_status)
 	{

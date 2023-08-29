@@ -141,9 +141,9 @@ static void display_connected(
  * Return: Nothing
 */
 void display_default_text(
-	display_status_t wifi_symbol, display_status_t mqtt_symbol)
+	display_status_t symbol_wifi, display_status_t symbol_mqtt)
 {
-	display_connected(wifi_symbol, mqtt_symbol);
+	display_connected(symbol_wifi, symbol_mqtt);
 
 	lcd.setCursor(0, 1);
 	lcd.print("   Scan Card    ");
@@ -173,6 +173,7 @@ void display_scanning_verifying()
 */
 void display_connecting_to_wifi()
 {
+	scroll_screen = false;
 	lcd.setCursor(0, 0);
 	lcd.print(" Connecting to  ");
 	lcd.setCursor(0, 1);
@@ -180,7 +181,8 @@ void display_connecting_to_wifi()
 }
 
 /**
- * display_connecting_to_mqtt - displays "Connecting to MQTT" on the display
+ * display_mqtt_retry - displays MQTT configuration error as
+ *  the reason for a device restart
  *
  * Return: Nothing
  *
@@ -188,6 +190,7 @@ void display_connecting_to_wifi()
 */
 void display_mqtt_retry()
 {
+	scroll_screen = false;
 	lcd.setCursor(0, 0);
 	lcd.print("Enter valid MQTT");
 	lcd.setCursor(0, 1);
@@ -210,6 +213,7 @@ void display_mqtt_retry()
 */
 void display_AP_mode()
 {
+	scroll_screen = false;
 	lcd.setCursor(0, 0);
 	lcd.print(" ! A.P. Mode !  ");
 	lcd.setCursor(0, 1);
@@ -229,7 +233,7 @@ void display_valid_scan()
 }
 
 /**
- * display_valid_scan - displays an invalid scan message with the
+ * display_invalid_scan - displays an invalid scan message with the
  *  reason (unknown ID, wrong sentry, wrong time) on the display,
  *  on response from the sentry monitoring platform
  *

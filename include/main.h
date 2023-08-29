@@ -17,14 +17,26 @@
 #define WIFI_CONFIG_PIN 0
 
 /* checkpoint ID to send with a sentry scan */
-#define CHECKPOINT_ID "A";
+#define CHECKPOINT_ID "A"
 
 /* Indicator for whether shift is ongoing/over */
-extern volatile bool shift_status;
+extern bool shift_status;
 
-extern volatile uint8_t alarm_reason;
+extern uint8_t alarm_reason;
 
-enum alerts_e {
+/**
+ * enum alerts_e - For describing alarm reasons
+ *
+ * @SUCCESS: No alarm, successful scan
+ * @UNKNOWN_CARD: Card not registered in the system
+ * @STOLEN_CARD: Card registered as stolen
+ * @WRONG_CHECKPOINT: Card scanned at wrong location
+ * @WRONG_TIME: Card scanned outside scan window
+ * @OVERDUE_SCAN: Card scanned too late
+ * @NO_SHIFT_SCAN: Card scanned outside shift
+*/
+enum alerts_e
+{
 	SUCCESS = 1,
 	UNKNOWN_CARD = 2,
 	STOLEN_CARD = 3,

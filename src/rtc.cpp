@@ -13,7 +13,7 @@ RTC_DS3231 my_RTC;
 void initialize_RTC()
 {
 	my_RTC.begin();
-	
+
 	/*
 		set time of the RTC
 		adjusts it to time at which the code was compiled

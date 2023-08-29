@@ -2,7 +2,7 @@
 #include "main.h"
 
 /*
-	library to interact with RFID card reader, includes SPI.h
+*	library to interact with RFID card reader, includes SPI.h
 */
 #include <MFRC522.h>
 
@@ -28,10 +28,10 @@ void initialize_rfid()
 
 /**
  * dump_byte_array - dumps the scanned hex RFID UID into a string literal
- * 
+ *
  * @buffer: buffer storing scanned RFID UID
  * @buffer_size: length of the RFID UID in bytes (4, 7 or 10)
- * 
+ *
  * Return: string literal representation of the scanned RFID UID
 */
 static void dump_byte_array(byte *buffer, byte buffer_size)

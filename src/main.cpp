@@ -29,6 +29,11 @@ volatile bool shift_status = false;
 
 volatile uint8_t alarm_reason;
 
+/**
+ * setup - Single running code before loop
+ *
+ * Return: nothing
+*/
 void setup() {
 	Serial.begin(115200);
 
@@ -52,11 +57,16 @@ void setup() {
 	mqtt_setup_once();
 }
 
+/**
+ * loop - Repeatedly running code of the program
+ *
+ * Return: nothing
+*/
 void loop()
 {
 	/* if WiFi config mode button pressed */
 	check_wifi_config_requested();
-	
+
 	if (alarm_on_off)
 	{
 		if (alarm_reason == OVERDUE_SCAN)
@@ -66,7 +76,7 @@ void loop()
 		return;
 	}
 
-	/* 
+	/*
 		conditions with return statements:
 		running code below them is pointless hence early return, restart loop
 	*/
