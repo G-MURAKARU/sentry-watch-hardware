@@ -20,9 +20,9 @@
 #define CHECKPOINT_ID "A"
 
 /* Indicator for whether shift is ongoing/over */
-extern bool shift_status;
+extern volatile bool shift_status;
 
-extern uint8_t alarm_reason;
+extern volatile uint8_t alarm_reason;
 
 /**
  * enum alerts_e - For describing alarm reasons
