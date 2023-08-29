@@ -29,9 +29,6 @@ volatile bool shift_status = false;
 
 volatile uint8_t alarm_reason;
 
-/* Flag to display success message on the LCD screen */
-volatile bool display_success = false;
-
 void setup() {
 	Serial.begin(115200);
 
@@ -67,12 +64,6 @@ void loop()
 		else
 			display_invalid_scan(alarm_reason);
 		return;
-	}
-
-	if (display_success)
-	{
-		display_valid_scan();
-		display_success = false;
 	}
 
 	/* 

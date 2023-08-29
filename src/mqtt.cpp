@@ -2,6 +2,7 @@
 #include "main.h"
 #include "mqtt.h"
 #include "my_wifi.h"
+#include "lcd.h"
 #include "alarm.h"
 #include "rtc.h"
 #include "rfid.h"
@@ -41,10 +42,10 @@ bool domain = false;
 /* MQTT instantiations */
 
 /* asynchronous MQTT Client instance */
-AsyncMqttClient mqtt_client;
+static AsyncMqttClient mqtt_client;
 
 /* created MQTT client's ID */
-const char *mqtt_client_id = "checkpoint-A";
+static const char *mqtt_client_id = "checkpoint-A";
 
 /* defining MQTT topics */
 
@@ -69,29 +70,23 @@ const char *mqtt_client_id = "checkpoint-A";
 #define OUTSIDE_SHIFT_SCAN "sentry-platform/checkpoints/outside-shift-scan"
 
 /* MQTT client reconnection timer */
-Ticker mqtt_reconnection_timer;
-
-/* MQTT publish dummy variables for dummy code */
-volatile unsigned long previous_millis = 0;
-const unsigned short buffer_millis = 10000;
+static Ticker mqtt_reconnection_timer;
 
 /* JSON instantiations */
 
-/* JSON object to store the checkpoint ID, RFID UID and time of scan */
-StaticJsonDocument<128> sentry_scan_info;
 /* JSON object to ferry connected info */
-StaticJsonDocument<128> connected_to_mqtt;
+static StaticJsonDocument<128> connected_to_mqtt;
 
 /* prototyping functions */
 
 /* WiFi and MQTT functions */
 
-void on_mqtt_connect(bool);
-void on_mqtt_disconnect(AsyncMqttClientDisconnectReason);
-void on_mqtt_subscribe(uint16_t, uint8_t);
-void on_mqtt_unsubscribe(uint16_t);
-void on_mqtt_message(char *, char *, AsyncMqttClientMessageProperties, size_t, size_t, size_t);
-void on_mqtt_publish(uint16_t);
+static void on_mqtt_connect(bool);
+static void on_mqtt_disconnect(AsyncMqttClientDisconnectReason);
+static void on_mqtt_subscribe(uint16_t, uint8_t);
+static void on_mqtt_unsubscribe(uint16_t);
+static void on_mqtt_message(char *, char *, AsyncMqttClientMessageProperties, size_t, size_t, size_t);
+static void on_mqtt_publish(uint16_t);
 
 /**
  * mqtt_setup_once - MQTT client configs that should only be set once, at device startup
@@ -173,7 +168,7 @@ void connect_to_mqtt()
 
 void mqtt_stop_reconnect()
 {
-    mqtt_reconnection_timer.detach();
+	mqtt_reconnection_timer.detach();
 }
 
 /**
@@ -183,7 +178,7 @@ void mqtt_stop_reconnect()
  * 
  * Return: nothing
 */
-void on_mqtt_connect(bool session_present)
+static void on_mqtt_connect(bool session_present)
 {
 	Serial.println("Connected to MQTT!");
 	Serial.print("Session present: ");
@@ -220,7 +215,7 @@ void on_mqtt_connect(bool session_present)
  * 
  * Return: nothing
 */
-void on_mqtt_disconnect(AsyncMqttClientDisconnectReason reason)
+static void on_mqtt_disconnect(AsyncMqttClientDisconnectReason reason)
 {
 	Serial.println("Disconnected from MQTT.");
 	Serial.printf("Reason: %d\n", reason);
@@ -237,7 +232,7 @@ void on_mqtt_disconnect(AsyncMqttClientDisconnectReason reason)
  * 
  * Return: nothing
 */
-void on_mqtt_subscribe(uint16_t packet_id, uint8_t qos)
+static void on_mqtt_subscribe(uint16_t packet_id, uint8_t qos)
 {
 	Serial.println("Subscribe acknowledged.");
 	Serial.print("  packet ID: ");
@@ -253,7 +248,7 @@ void on_mqtt_subscribe(uint16_t packet_id, uint8_t qos)
  * 
  * Return: nothing
 */
-void on_mqtt_unsubscribe(uint16_t packet_id)
+static void on_mqtt_unsubscribe(uint16_t packet_id)
 {
 	Serial.print("Unsubscribe acknowledged.");
 	Serial.print(" packet ID: ");
@@ -273,7 +268,7 @@ void on_mqtt_unsubscribe(uint16_t packet_id)
  * 
  * Return: Nothing
 */
-void on_mqtt_message(char *topic, char *payload, AsyncMqttClientMessageProperties properties, size_t len, size_t index, size_t total)
+static void on_mqtt_message(char *topic, char *payload, AsyncMqttClientMessageProperties properties, size_t len, size_t index, size_t total)
 { 
 	Serial.println("Publish received.");
 	Serial.print("  topic: ");
@@ -325,10 +320,9 @@ void on_mqtt_message(char *topic, char *payload, AsyncMqttClientMessagePropertie
 	{
 		uint8_t code = atoi(message.c_str());
 
-        extern bool display_success;
 		if (code == 1)
 		/* set flag to display success message on the LCD screen */
-			display_success = true;
+			display_valid_scan();
 		else
 			alarm_reason = code;
 	}
@@ -341,7 +335,7 @@ void on_mqtt_message(char *topic, char *payload, AsyncMqttClientMessagePropertie
  * 
  * Return: nothing
 */
-void on_mqtt_publish(uint16_t packet_id)
+static void on_mqtt_publish(uint16_t packet_id)
 {
 	Serial.print("Publish acknowledged.");
 	Serial.print(" packet ID: ");
@@ -351,16 +345,19 @@ void on_mqtt_publish(uint16_t packet_id)
 
 bool mqtt_isConnected()
 {
-    return mqtt_client.connected();
+	return mqtt_client.connected();
 }
 
 
 void mqtt_send_scanned_card()
 {
+	/* JSON object to store the checkpoint ID, RFID UID and time of scan */
+	static StaticJsonDocument<128> sentry_scan_info;
+
 	/* extracting the current epoch time */
 	DateTime now = get_time_now();
 
-    /* saving the checkpoint's ID, scanned RFID UID and time of scan (epoch) into a JSON object */
+	/* saving the checkpoint's ID, scanned RFID UID and time of scan (epoch) into a JSON object */
 
 	sentry_scan_info["checkpoint-id"] = CHECKPOINT_ID; /* checkpoint */
 	sentry_scan_info["sentry-id"] = card_id; /* RFID UID */

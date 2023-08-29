@@ -9,6 +9,12 @@
 */
 #include <LiquidCrystal_I2C.h>
 
+/*
+	Library for performing fixed interval operations in a
+	non-blocking manner
+*/
+#include <Ticker.h>
+
 
 /* active I2C LCD instance */
 static LiquidCrystal_I2C lcd(0x27, 16, 2);
@@ -37,14 +43,81 @@ static const byte x_mark[8] = {
 	0b00000
 };
 
+/* LCD scrolling ticker */
+static Ticker lcd_scroll_ticker;
+
+/* Flag to scroll message on the LCD screen */
+static volatile bool scroll_screen = false;
+
+/* Variables required for the scroll */
+static String scroll_message;
+static int scroll_pos;
+static int scroll_display_columns;
+static int scroll_row;
 
 /**
- * display_connected - displays WiFi and MQTT check marks when both are connected
- *                     on display's top row
+ * scroll_callback - scrolls the setup scroll_message following the
+ *  scroll_ticker only if scroll is activated
  *
  * Return: Nothing
 */
-static void display_connected(display_status_t symbol_wifi, display_status_t symbol_mqtt)
+static void scroll_callback()
+{
+	if (scroll_screen)
+	{
+		if (scroll_pos < scroll_message.length() - 13)
+		{
+			lcd.setCursor(0, scroll_row);
+			lcd.print(scroll_message.substring(
+				scroll_pos, scroll_pos + scroll_display_columns));
+			scroll_pos++;
+			return;
+		}
+		scroll_screen = false;
+	}
+	lcd_scroll_ticker.detach();
+}
+
+/**
+ * scroll_text - displays a scrolling message on the display,
+ *  if the message's length exceeds 16 characters
+ *
+ * @row: display row on which to display message: 0 or 1
+ * @message: message to display
+ * @delay_time: time delay before scrolling to the next letter
+ * @lcd_columns: number of display's columns = 16
+ *
+ * Return: Nothing
+*/
+static void scroll_text(
+		int row, String message, int delay_time, int lcd_columns)
+{
+	/* Disable scrolling before editing message */
+	scroll_screen = false;
+
+	/* Adding some padding for the scroll message */
+	scroll_message = "   " + message + " ";
+	scroll_row = row;
+	scroll_display_columns = lcd_columns;
+	scroll_pos = 1;
+
+	lcd.setCursor(0, row);
+	lcd.print(scroll_message.substring(0, lcd_columns));
+	lcd_scroll_ticker.attach((float)delay_time/1000, scroll_callback);
+}
+
+
+/**
+ * display_connected - displays WiFi and MQTT check marks when
+ *  both are connected on display's top row
+ *
+ * @symbol_wifi: the symbol to show the WiFi connection
+ * @symbol_mqtt: the symbol to show the MQTT connection
+ *
+ * Return: Nothing
+*/
+static void display_connected(
+		display_status_t symbol_wifi, display_status_t symbol_mqtt)
 {
 	lcd.setCursor(0, 0);
 	lcd.print("WiFi: ");
@@ -59,11 +132,16 @@ static void display_connected(display_status_t symbol_wifi, display_status_t sym
 }
 
 /**
- * display_default_text - displays "Scan Card" on the bottom row of the display
+ * display_default_text - displays "Scan Card" on the bottom
+ *  row of the display
+ *
+ * @symbol_wifi: the symbol to show the WiFi connection
+ * @symbol_mqtt: the symbol to show the MQTT connection
  *
  * Return: Nothing
 */
-void display_default_text(display_status_t wifi_symbol, display_status_t mqtt_symbol)
+void display_default_text(
+	display_status_t wifi_symbol, display_status_t mqtt_symbol)
 {
 	display_connected(wifi_symbol, mqtt_symbol);
 
@@ -72,8 +150,9 @@ void display_default_text(display_status_t wifi_symbol, display_status_t mqtt_sy
 }
 
 /**
- * display_scanning_verifying - displays "Scanning and verifying sentry ID" when the card is scanned
- *                              and sent to the sentry platform, and awaiting a verification response
+ * display_scanning_verifying - displays "Scanning and verifying sentry ID"
+ *  when the card is scanned and sent to the sentry platform, and is awaiting
+ *  a verification response
  *
  * Return: Nothing
 */
@@ -86,10 +165,11 @@ void display_scanning_verifying()
 }
 
 /**
- * display_connected_to_wifi - displays "Connecting to WiFi" on the display
- *                             called in WiFi disconnect event handler
+ * display_connecting_to_wifi - displays "Connecting to WiFi" on the display
  *
  * Return: Nothing
+ *
+ * Note: called in WiFi disconnect event handler
 */
 void display_connecting_to_wifi()
 {
@@ -101,9 +181,10 @@ void display_connecting_to_wifi()
 
 /**
  * display_connecting_to_mqtt - displays "Connecting to MQTT" on the display
- *                             called in connect_to_mqtt
  *
  * Return: Nothing
+ *
+ * Note: called in connect_to_mqtt
 */
 void display_mqtt_retry()
 {
@@ -120,10 +201,12 @@ void display_mqtt_retry()
 }
 
 /**
- * display_AP_mode - displays message informing that the device is in AP/WiFi config mode
- *                   called in config_mode_callback
+ * display_AP_mode - displays message informing that the device is in
+ *  AP/WiFi config mode
  *
  * Return: Nothing
+ *
+ * Note: called in config_mode_callback
 */
 void display_AP_mode()
 {
@@ -135,7 +218,7 @@ void display_AP_mode()
 
 /**
  * display_valid_scan - displays a valid scan message on the display,
- *                      on response from the sentry monitoring platform
+ *  on response from the sentry monitoring platform
  *
  * Return: Nothing
 */
@@ -146,9 +229,9 @@ void display_valid_scan()
 }
 
 /**
- * display_valid_scan - displays an invalid scan message on the display,
- *                      on response from the sentry monitoring platform
- *                      displays with the reason: unknown ID, wrong sentry, wrong time
+ * display_valid_scan - displays an invalid scan message with the
+ *  reason (unknown ID, wrong sentry, wrong time) on the display,
+ *  on response from the sentry monitoring platform
  *
  * @reason: flag corresponding to reason for invalid scan
  *          1: unknown ID
@@ -188,8 +271,8 @@ void display_invalid_scan(uint8_t reason)
 }
 
 /**
- * display_scan_time_elapsed - displays message indicating that an expected sentry
- *                             did not scan within their given check-in window
+ * display_scan_time_elapsed - displays message indicating that an expected
+ *  sentry did not scan within their given check-in window
  *
  * Return: Nothing
 */
@@ -199,33 +282,6 @@ void display_scan_time_elapsed()
 	lcd.print("SENTRY VERIFYING");
 	lcd.setCursor(0, 1);
 	lcd.print(" WINDOW PASSED! ");
-}
-
-/**
- * scroll_text - displays a scrolling message on the display,
- *               if the message's length exceeds 16 characters
- *
- * @row: display row on which to display message: 0 or 1
- * @message: message to display
- * @delay_time: time delay before scrolling to the next letter
- * @lcd_columns: number of display's columns = 16
- *
- * Return: Nothing
-*/
-void scroll_text(int row, String message, int delay_time, int lcd_columns)
-{
-	for (int i = 0; i < 3; i++)
-	{
-		message = " " + message;
-	}
-	message += " ";
-
-	for (int pos = 0; pos < message.length() - 13; pos++)
-	{
-		lcd.setCursor(0, row);
-		lcd.print(message.substring(pos, pos + lcd_columns));
-		delay(delay_time);
-	}
 }
 
 /**

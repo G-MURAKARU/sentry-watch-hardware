@@ -4,7 +4,7 @@
 #include <Arduino.h>
 
 /**
- * enum display_status_e - For displaying status
+ * enum display_status_e - For displaying connection status
 */
 typedef enum display_status_e{
     DISPLAY_SUCCESS = 1,
@@ -20,7 +20,6 @@ void display_AP_mode();
 void display_valid_scan();
 void display_invalid_scan(uint8_t);
 void display_scan_time_elapsed();
-void scroll_text(int, String, int, int);
 void initialize_display();
 
 #endif		/* ifndef __INC_DISPLAY_LCD_H */
