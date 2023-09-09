@@ -8,6 +8,10 @@
 #define MQTT_BROKER_USER_MAX_LEN        20
 #define MQTT_BROKER_PASS_MAX_LEN        20
 
+#define MQTT_CLIENT_ID_MAX_LEN          20
+#define MQTT_CLIENT_ID_PREFIX           "Checkpoint-"
+#define MQTT_CLIENT_ID_PREFIX_LEN       11
+
 #define MQTT_RECONNECT_ATTEMPT_PERIOD   2.0f
 
 /* broker's domain name/IP Address */
@@ -23,6 +27,8 @@ extern IPAddress broker_ip;
  * instead of an IP Address
  */
 extern bool domain;
+/* created MQTT client's ID */
+extern char mqtt_client_id[];
 
 
 void mqtt_setup_once(void);

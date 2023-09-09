@@ -40,6 +40,9 @@ static AsyncWiFiManagerParameter mqtt_user(
 /* broker password form field */
 static AsyncWiFiManagerParameter mqtt_pass(
 	"broker-pass", "MQTT Password", NULL, MQTT_BROKER_PASS_MAX_LEN);
+/* Checkpoint ID form field */
+static AsyncWiFiManagerParameter checkpoint_id(
+	"checkpoint-id", "Checkpoint ID", NULL, (MQTT_CLIENT_ID_MAX_LEN - MQTT_CLIENT_ID_PREFIX_LEN));
 
 /* initialising variables to handle WiFi disconnection */
 
@@ -74,6 +77,9 @@ static void set_broker_credentials()
 	strncpy(broker_username, mqtt_user.getValue(), mqtt_user.getValueLength());
 	/* save broker's password */
 	strncpy(broker_password, mqtt_pass.getValue(), mqtt_pass.getValueLength());
+	/* save checkpoint ID */
+	strncpy(&(mqtt_client_id[MQTT_CLIENT_ID_PREFIX_LEN]), checkpoint_id.getValue(), checkpoint_id.getValueLength());
+	CHECKPOINT_ID = atoi(&(mqtt_client_id[MQTT_CLIENT_ID_PREFIX_LEN]));
 
 	/*
 		test for broker identity - domain name or IP address
@@ -202,6 +208,8 @@ void setup_wifi_manager()
 	wifi_manager.addParameter(&mqtt_user);
 	/* add MQTT broker password text field */
 	wifi_manager.addParameter(&mqtt_pass);
+	/* add Checkpoint ID text field */
+	wifi_manager.addParameter(&checkpoint_id);
 }
 
 /**

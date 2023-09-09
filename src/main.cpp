@@ -21,6 +21,9 @@
 /* Functions to interact with the alarm LED and buzzer */
 #include "alarm.h"
 
+/* checkpoint ID to send with a sentry scan */
+uint32_t CHECKPOINT_ID = 0;
+
 
 /* shift/circuit status flags */
 

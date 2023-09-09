@@ -45,7 +45,7 @@ bool domain = false;
 static AsyncMqttClient mqtt_client;
 
 /* created MQTT client's ID */
-static const char *mqtt_client_id = "checkpoint-A";
+char mqtt_client_id[MQTT_CLIENT_ID_MAX_LEN] = MQTT_CLIENT_ID_PREFIX;
 
 /* defining MQTT topics */
 

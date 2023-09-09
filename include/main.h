@@ -17,7 +17,7 @@
 #define WIFI_CONFIG_PIN 0
 
 /* checkpoint ID to send with a sentry scan */
-#define CHECKPOINT_ID "A"
+extern uint32_t CHECKPOINT_ID;
 
 /* Indicator for whether shift is ongoing/over */
 extern volatile bool shift_status;
