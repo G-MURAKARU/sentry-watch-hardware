@@ -9,6 +9,7 @@
 
 /* active MFRC instance */
 static MFRC522 reader(MFRC_SS_PIN, MFRC_RST_PIN);
+MFRC522::MIFARE_Key key;
 
 /* string variable to store stringified RFID UID */
 String card_id;
@@ -24,6 +25,11 @@ String card_id;
 void initialize_rfid()
 {
     reader.PCD_Init();
+
+	for (byte i = 0; i < 6; i++)
+	{
+		key.keyByte[i] = 0xFF;
+	}
 }
 
 /**
@@ -59,7 +65,7 @@ static void dump_byte_array(byte *buffer, byte buffer_size)
 */
 bool rfid_read_new_card()
 {
-    /* checking if there is a 'new' RFID card in vicinity to scan */
+	/* checking if there is a 'new' RFID card in vicinity to scan */
 	if (!reader.PICC_IsNewCardPresent())
 		return false;
 
@@ -68,6 +74,9 @@ bool rfid_read_new_card()
 
 	/* dumping the scanned card's ID (hex number) into a string */
 	dump_byte_array(reader.uid.uidByte, reader.uid.size);
+
+	reader.PICC_HaltA();
+  	reader.PCD_StopCrypto1();
 
     return true;
 }

@@ -123,7 +123,7 @@ void mqtt_setup_once()
 	String connection_info;
 	serializeJson(connected_to_mqtt, connection_info);
 
-	mqtt_client.setWill(CONNECTED, 2, false, connection_info.c_str());
+	mqtt_client.setWill(CONNECTED, 2, true, connection_info.c_str());
 }
 
 /**
@@ -204,7 +204,7 @@ static void on_mqtt_connect(bool session_present)
 
 	delayMicroseconds(3000000);
 
-	mqtt_client.publish(CONNECTED, 2, false, connection_info.c_str());
+	mqtt_client.publish(CONNECTED, 2, true, connection_info.c_str());
 
 	/* subscribe to the relevant topics */
 
@@ -376,7 +376,7 @@ void mqtt_send_scanned_card()
 
 	sentry_scan_info["checkpoint-id"] = CHECKPOINT_ID; /* checkpoint */
 	sentry_scan_info["sentry-id"] = card_id; /* RFID UID */
-	sentry_scan_info["scan-time"] = now.unixtime() + 46; /* epoch time of scan */
+	sentry_scan_info["scan-time"] = now.unixtime() + 20; /* epoch time of scan */
 
 	/* serialising JSON object to JSON string */
 	String sent_sentry_info;
